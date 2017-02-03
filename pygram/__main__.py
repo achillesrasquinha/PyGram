@@ -1,5 +1,3 @@
-#!/usr/bin/env python
-
 from pygram import PyGram
 
 def main():

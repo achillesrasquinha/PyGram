@@ -1,171 +1,95 @@
-import os
-from collections import defaultdict
-
 import tkinter as tk
 from tkinter import filedialog
 from PIL import Image, ImageTk
 
 from pygram.config import PyGramConfig
-from pygram.filters import grayscale
+from pygram.filters import nss
 
 class PyGram(object):
-    ASPECT_RATIO          = 3 / 2
-    SIZE_WIDTH            = 320
-    SIZE_WINDOW           = (SIZE_WIDTH, int(SIZE_WIDTH * ASPECT_RATIO))
-    SIZE_IMAGE_PANEL      = (SIZE_WINDOW[0], SIZE_WINDOW[0])
-    SIZE_BUTTON_GRID      = (1, 3)
-    ACCEPTED_FILE_TYPES   = [ ]
-    FILTERS               = [
-        {
-            'name': 'normal',
-            'command': lambda image: image
-        },
-        {
-            'name': 'grayscale',
-            'command': grayscale
-        },
-        {
-            'name': 'inkwell',
-            'command': lambda image: image
-        }
-    ]
-    SCALES                 = [
-        {
-            'name': 'R',
-            'min': 0, 'max': 100
-        },
-        {
-            'name': 'G',
-            'min': 0, 'max': 100
-        },
-        {
-            'name': 'B',
-            'min': 0, 'max': 100
-        },
-    ]
-    # inheritance from tk.Frame object
-    # descendent class of PyGram
     class Frame(tk.Frame):
-        '''
-            Creates a new PyGram.Frame object
-
-            Parameters:
-                root (tk.Tk) - the root frame of the app
-        '''
-        def __init__(self, master = None):
-            self.master = master
-
-            # calls inherited class's constructor
+        def __init__(self,
+                     master      = None,
+                     window_size = (PyGramConfig.WINDOW_WIDTH, PyGramConfig.WINDOW_HEIGHT)):
+            self.master      = master
+            self.window_size = window_size
             tk.Frame.__init__(self, self.master)
-            self.createFrame()
 
-        def createFrame(self):
-            self.menu       = tk.Menu(self.master)
+            self.create_menu()
+            self.create_image_panel()
+
+        def create_menu(self):
+            self.menu     = tk.Menu(self.master)
             self.master.config(menu = self.menu)
 
-            self.filemenu   = tk.Menu(self.menu,
-                                      tearoff = False)
+            self.filemenu = tk.Menu(self.menu,
+                                    tearoff = False)
             self.menu.add_cascade(label = 'File',
                                   menu  = self.filemenu)
 
-            width, height   = PyGram.SIZE_IMAGE_PANEL
-            self.imagePanel = tk.Label(self.master,
-                                       width  = width,
-                                       height = height)
-            rows, cols      = PyGram.SIZE_BUTTON_GRID
-            self.imagePanel.grid(row        = 0,
-                                 column     = 0,
-                                 columnspan = cols)
+        def create_image_panel(self):
+            size             = self.window_size[0]
+            self.image_panel = tk.Label(self.master,
+                                        width  = size,
+                                        height = size)
+            self.image_panel.grid(row        = 0,
+                                  column     = 0,
+                                  columnspan = PyGramConfig.BTNGRID_COLS,
+                                  sticky     = tk.N + tk.E + tk.W + tk.S)
 
-            self.scale      = defaultdict()
-            for i, scale in enumerate(PyGram.SCALES):
-                self.scale[scale['name']] = tk.Scale(self.master,
-                                                     from_  = scale['min'],
-                                                     to     = scale['max'],
-                                                     orient = tk.HORIZONTAL)
-                self.scale[scale['name']].grid(row        = i + 1,
-                                               column     = 0,
-                                               columnspan = cols,
-                                               sticky     = tk.N + tk.E + tk.W + tk.S)
-
-            self.buttons    = list()
-            offset          = len(PyGram.SCALES) + PyGram.SIZE_BUTTON_GRID[0]
-            k               = 0
-            for i in range(rows):
-                self.buttons.append(list())
-                for j in range(cols):
-                    f      = PyGram.FILTERS[k]
-                    name   = f['name'].capitalize()
-                    button = tk.Button(self.master,
-                                       text = name)
-                    button.grid(row    = i + offset,
-                                column = j,
-                                sticky = tk.N + tk.E + tk.W + tk.S)
-
-                    self.buttons[i].append(button)
-                    k      = k + 1
-
-    def __init__(self):
-        # creates a Tk object, instantized only once
-        width, height = PyGram.SIZE_WINDOW
-
-        self.root     = tk.Tk()
-        self.root.title(PyGramConfig.NAME)
-        self.root.geometry('{width}x{height}'.format(
-            width  = width,
-            height = height
+    def __init__(self,
+                 window_aspect_ratio = PyGramConfig.WINDOW_ASPECT_RATIO,
+                 window_width        = PyGramConfig.WINDOW_WIDTH,
+                 window_height       = PyGramConfig.WINDOW_HEIGHT,
+                 resizable           = False):
+        self.window_size  = (int(window_width), int(window_height))
+        self.root         = tk.Tk()
+        self.root.title('{name} v{version}'.format(
+            name    = PyGramConfig.NAME,
+            version = PyGramConfig.VERSION
         ))
-        self.root.resizable(width  = False,
-                            height = False)
+        self.root.geometry('{width}x{height}'.format(
+            width   = window_width,
+            height  = window_height
+        ))
+        self.root.resizable(width  = resizable,
+                            height = resizable)
+        self.frame        = PyGram.Frame(self.root, self.window_size)
+        self.frame.filemenu.add_command(label   = 'Open File',
+                                        command = self.on_open_file)
 
-        self.frame = PyGram.Frame(self.root)
-        self.frame.filemenu.add_command(label = 'Open File', command = self.onOpenFile)
-
-    def onOpenFile(self):
-        filetypes = PyGram.ACCEPTED_FILE_TYPES
+    def on_open_file(self):
+        filetypes = PyGramConfig.ACCEPTED_FILES
 
         dialog    = filedialog.Open(self.frame, filetypes = filetypes)
         filename  = dialog.show()
 
+        self.open_image(filename)
+
+    def open_image(self, filename):
         if filename:
-            self.image   = Image.open(filename)
-            self.image   = PyGram.resize(self.image, PyGram.SIZE_IMAGE_PANEL)
-            self.imagetk = ImageTk.PhotoImage(self.image)
+            self.image = Image.open(filename)
+            self.image = PyGram.resize_image(self.image, self.window_size)
+            self.update_image_panel(self.image)
 
-            self.frame.imagePanel.configure(image = self.imagetk)
+    def resize_image(image, size):
+        width, height = image.size
+        aspect_ratio  = width / height
 
-            rows, cols   = PyGram.SIZE_BUTTON_GRID
-            k            = 0
-            for i in range(rows):
-                for j in range(cols):
-                    f       = PyGram.FILTERS[k]
-                    command = f['command']
-                    self.frame.buttons[i][j].config(command = lambda command = command: self.onClick(command))
-                    k    = k + 1
-
-            self.convert  = self.image
-
-    def resize(image, size):
-        w, h    = image.size
-        ratio   = w / h
-        maximum = max(w, h)
-
-        if maximum is w:
+        if max(width, height) is width:
             width  = size[0]
-            height = width / ratio
+            height = width  / aspect_ratio
         else:
             height = size[1]
-            width  = height * ratio
+            width  = height * aspect_ratio
 
         image.thumbnail((width, height), Image.ANTIALIAS)
 
         return image
 
-    def onClick(self, filter):
-        self.convert = filter(self.image)
-        self.imagetk = ImageTk.PhotoImage(self.convert)
-        self.frame.imagePanel.configure(image = self.imagetk)
+    def update_image_panel(self, image):
+        self.imagetk = ImageTk.PhotoImage(image)
+        self.frame.image_panel.configure(image = self.imagetk)
 
     def run(self):
-        # starts Tkinter's main thread
+        self.open_image(PyGramConfig.DEFAULT_FILE)
         self.root.mainloop()

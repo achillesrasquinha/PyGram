@@ -15,7 +15,9 @@ license           = 'MIT'
 modules           = [
     'pygram',
     'pygram.config',
-    'pygram.filters'
+    'pygram.filters',
+    'pygram.data',
+    'pygram.utils'
 ]
 homepage          = 'https://achillesrasquinha.github.io/gpplot'
 github_username   = 'achillesrasquinha'
