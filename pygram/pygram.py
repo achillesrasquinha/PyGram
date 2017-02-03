@@ -1,4 +1,5 @@
 import os
+from collections import defaultdict
 
 import tkinter as tk
 from tkinter import filedialog
@@ -8,8 +9,10 @@ from pygram.config import PyGramConfig
 from pygram.filters import grayscale
 
 class PyGram(object):
-    SIZE_WINDOW           = (320, 480)
-    SIZE_IMAGE_PANEL      = (320, 320)
+    ASPECT_RATIO          = 3 / 2
+    SIZE_WIDTH            = 320
+    SIZE_WINDOW           = (SIZE_WIDTH, int(SIZE_WIDTH * ASPECT_RATIO))
+    SIZE_IMAGE_PANEL      = (SIZE_WINDOW[0], SIZE_WINDOW[0])
     SIZE_BUTTON_GRID      = (1, 3)
     ACCEPTED_FILE_TYPES   = [ ]
     FILTERS               = [
@@ -25,6 +28,20 @@ class PyGram(object):
             'name': 'inkwell',
             'command': lambda image: image
         }
+    ]
+    SCALES                 = [
+        {
+            'name': 'R',
+            'min': 0, 'max': 100
+        },
+        {
+            'name': 'G',
+            'min': 0, 'max': 100
+        },
+        {
+            'name': 'B',
+            'min': 0, 'max': 100
+        },
     ]
     # inheritance from tk.Frame object
     # descendent class of PyGram
@@ -60,7 +77,19 @@ class PyGram(object):
                                  column     = 0,
                                  columnspan = cols)
 
+            self.scale      = defaultdict()
+            for i, scale in enumerate(PyGram.SCALES):
+                self.scale[scale['name']] = tk.Scale(self.master,
+                                                     from_  = scale['min'],
+                                                     to     = scale['max'],
+                                                     orient = tk.HORIZONTAL)
+                self.scale[scale['name']].grid(row        = i + 1,
+                                               column     = 0,
+                                               columnspan = cols,
+                                               sticky     = tk.N + tk.E + tk.W + tk.S)
+
             self.buttons    = list()
+            offset          = len(PyGram.SCALES) + PyGram.SIZE_BUTTON_GRID[0]
             k               = 0
             for i in range(rows):
                 self.buttons.append(list())
@@ -69,12 +98,11 @@ class PyGram(object):
                     name   = f['name'].capitalize()
                     button = tk.Button(self.master,
                                        text = name)
-                    button.grid(row    = i + 1,
+                    button.grid(row    = i + offset,
                                 column = j,
                                 sticky = tk.N + tk.E + tk.W + tk.S)
 
                     self.buttons[i].append(button)
-
                     k      = k + 1
 
     def __init__(self):
