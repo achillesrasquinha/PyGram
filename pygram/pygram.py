@@ -8,16 +8,18 @@ from pygram.filters import nss
 class PyGram(object):
     class Frame(tk.Frame):
         def __init__(self,
-                     master      = None,
-                     window_size = (PyGramConfig.WINDOW_WIDTH, PyGramConfig.WINDOW_HEIGHT)):
-            self.master      = master
-            self.window_size = window_size
+                     master       = None,
+                     window_size  = (PyGramConfig.WINDOW_WIDTH, PyGramConfig.WINDOW_HEIGHT),
+                     btngrid_size = (PyGramConfig.BTNGRID_ROWS, PyGramConfig.BTNGRID_COLS)):
+            self.master       = master
+            self.window_size  = window_size
+            self.btngrid_size = btngrid_size
+
             tk.Frame.__init__(self, self.master)
 
-            self.create_menu()
-            self.create_image_panel()
+            self.build_user_interface()
 
-        def create_menu(self):
+        def build_user_interface(self):
             self.menu     = tk.Menu(self.master)
             self.master.config(menu = self.menu)
 
@@ -26,34 +28,55 @@ class PyGram(object):
             self.menu.add_cascade(label = 'File',
                                   menu  = self.filemenu)
 
-        def create_image_panel(self):
-            size             = self.window_size[0]
+            rows, cols       = self.btngrid_size
+
             self.image_panel = tk.Label(self.master,
-                                        width  = size,
-                                        height = size)
+                                        width  = self.window_size[0],
+                                        height = self.window_size[0])
             self.image_panel.grid(row        = 0,
                                   column     = 0,
-                                  columnspan = PyGramConfig.BTNGRID_COLS,
-                                  sticky     = tk.N + tk.E + tk.W + tk.S)
+                                  columnspan = cols,
+                                  sticky     = tk.E + tk.W)
+            self.button = { }
+            k           = 0
+            size        = len(PyGramConfig.FILTERS)
+            for i in range(rows):
+                for j in range(cols):
+                    if k < size:
+                        f      = PyGramConfig.FILTERS[k]
+                        text   = f['name']
+                        button = tk.Button(self.master,
+                                           text = text.capitalize())
+                        button.grid(row    = i + 1,
+                                    column = j,
+                                    sticky = tk.N + tk.E + tk.W + tk.S)
+                        self.button[text]  = button
+
+                        k      = k + 1
 
     def __init__(self,
                  window_aspect_ratio = PyGramConfig.WINDOW_ASPECT_RATIO,
                  window_width        = PyGramConfig.WINDOW_WIDTH,
                  window_height       = PyGramConfig.WINDOW_HEIGHT,
+                 btngrid_rows        = PyGramConfig.BTNGRID_ROWS,
+                 btngrid_cols        = PyGramConfig.BTNGRID_COLS,
                  resizable           = False):
         self.window_size  = (int(window_width), int(window_height))
+        self.btngrid_size = (btngrid_rows, btngrid_cols)
         self.root         = tk.Tk()
         self.root.title('{name} v{version}'.format(
             name    = PyGramConfig.NAME,
             version = PyGramConfig.VERSION
         ))
         self.root.geometry('{width}x{height}'.format(
-            width   = window_width,
+            width   = window_width + 2,
             height  = window_height
         ))
         self.root.resizable(width  = resizable,
                             height = resizable)
-        self.frame        = PyGram.Frame(self.root, self.window_size)
+        self.frame        = PyGram.Frame(self.root,
+                                         window_size  = self.window_size,
+                                         btngrid_size = self.btngrid_size)
         self.frame.filemenu.add_command(label   = 'Open File',
                                         command = self.on_open_file)
 
@@ -67,9 +90,22 @@ class PyGram(object):
 
     def open_image(self, filename):
         if filename:
-            self.image = Image.open(filename)
-            self.image = PyGram.resize_image(self.image, self.window_size)
+            self.image   = Image.open(filename)
+            self.image   = PyGram.resize_image(self.image, self.window_size)
+            self.convert = self.image
             self.update_image_panel(self.image)
+
+            rows, cols   = self.btngrid_size
+            k            = 0
+            size         = len(PyGramConfig.FILTERS)
+            for i in range(rows):
+                for j in range(cols):
+                    if k < size:
+                        f        = PyGramConfig.FILTERS[k]
+                        text     = f['name']
+                        function = lambda command = f['command']: self.on_click_filter(command)
+                        self.frame.button[text].config(command = function)
+                        k      = k + 1
 
     def resize_image(image, size):
         width, height = image.size
@@ -85,6 +121,10 @@ class PyGram(object):
         image.thumbnail((width, height), Image.ANTIALIAS)
 
         return image
+
+    def on_click_filter(self, command):
+        self.convert = command(self.image)
+        self.update_image_panel(self.convert)
 
     def update_image_panel(self, image):
         self.imagetk = ImageTk.PhotoImage(image)

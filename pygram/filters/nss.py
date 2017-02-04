@@ -11,6 +11,8 @@ def nss(image):
     enhancer = ImageEnhance.Color(nss)
     enhancer.enhance(1.3)
 
-    image.paste(nss, (0,0), nss)
+    copy     = image.copy()
 
-    return image
+    copy.paste(nss, (0,0), nss)
+
+    return copy

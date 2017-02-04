@@ -1,0 +1,2 @@
+def brannan(image):
+    pass
