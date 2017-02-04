@@ -2,7 +2,7 @@ import os
 
 from pygram.config import BaseConfig
 from pygram.utils.const import ABSPATH_BASE
-from pygram.filters import nss
+from pygram.filters import grayscale, nss
 
 class PyGramConfig(BaseConfig):
     NAME                = 'PyGram'
@@ -18,6 +18,10 @@ class PyGramConfig(BaseConfig):
         {
             'name': 'normal',
             'command': lambda image: image
+        },
+        {
+            'name': 'grayscale',
+            'command': lambda image: grayscale(image)
         },
         {
             'name': '1977',
