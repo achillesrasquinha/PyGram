@@ -3,6 +3,7 @@ from tkinter import filedialog
 from PIL import Image, ImageTk
 
 from pygram.config import PyGramConfig
+from pygram.utils.const import ABSPATH_LOGO
 from pygram.filters import nss
 
 class PyGram(object):
@@ -20,20 +21,28 @@ class PyGram(object):
             self.build_user_interface()
 
         def build_user_interface(self):
-            self.menu     = tk.Menu(self.master)
+            self.menu        = tk.Menu(self.master)
             self.master.config(menu = self.menu)
 
-            self.filemenu = tk.Menu(self.menu,
+            self.filemenu    = tk.Menu(self.menu,
                                     tearoff = False)
             self.menu.add_cascade(label = 'File',
                                   menu  = self.filemenu)
 
             rows, cols       = self.btngrid_size
 
+            logo             = Image.open(ABSPATH_LOGO)
+            size             = (self.window_size[0], int(self.window_size[1] * .075))
+            logo             = PyGram.resize_image(logo, size)
+            self.imagetk     = ImageTk.PhotoImage(logo)
+
+            label            = tk.Label(self.master, image = self.imagetk)
+            label.grid(row = 0, column = 0, columnspan = cols)
+
             self.image_panel = tk.Label(self.master,
                                         width  = self.window_size[0],
                                         height = self.window_size[0])
-            self.image_panel.grid(row        = 0,
+            self.image_panel.grid(row        = 1,
                                   column     = 0,
                                   columnspan = cols,
                                   sticky     = tk.E + tk.W)
@@ -47,7 +56,7 @@ class PyGram(object):
                         text   = f['name']
                         button = tk.Button(self.master,
                                            text = text.capitalize())
-                        button.grid(row    = i + 1,
+                        button.grid(row    = i + 2,
                                     column = j,
                                     sticky = tk.N + tk.E + tk.W + tk.S)
                         self.button[text]  = button
@@ -111,16 +120,18 @@ class PyGram(object):
         width, height = image.size
         aspect_ratio  = width / height
 
-        if max(width, height) is width:
+        if min(width, height) is width:
             width  = size[0]
             height = width  / aspect_ratio
         else:
             height = size[1]
             width  = height * aspect_ratio
 
-        image.thumbnail((width, height), Image.ANTIALIAS)
+        copy          = image.copy()
 
-        return image
+        copy.thumbnail((width, height), Image.ANTIALIAS)
+
+        return copy
 
     def on_click_filter(self, command):
         self.convert = command(self.image)

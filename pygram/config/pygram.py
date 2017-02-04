@@ -1,7 +1,7 @@
 import os
 
 from pygram.config import BaseConfig
-from pygram.utils.const import ABSPATH_BASE
+from pygram.utils.const import ABSPATH_DATA
 from pygram.filters import grayscale, nss
 
 class PyGramConfig(BaseConfig):
@@ -12,7 +12,7 @@ class PyGramConfig(BaseConfig):
     WINDOW_HEIGHT       = int(WINDOW_ASPECT_RATIO * WINDOW_WIDTH)
 
     ACCEPTED_FILES      = [ ]
-    DEFAULT_FILE        = os.path.join(ABSPATH_BASE, 'data', 'lenna.png')
+    DEFAULT_FILE        = os.path.join(ABSPATH_DATA, 'lenna.png')
 
     FILTERS             = [
         {
