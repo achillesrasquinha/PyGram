@@ -88,6 +88,8 @@ class PyGram(object):
                                          btngrid_size = self.btngrid_size)
         self.frame.filemenu.add_command(label   = 'Open File',
                                         command = self.on_open_file)
+        self.frame.filemenu.add_command(label   = 'Save',
+                                        command = self.on_save)
 
     def on_open_file(self):
         filetypes = PyGramConfig.ACCEPTED_FILES
@@ -96,6 +98,9 @@ class PyGram(object):
         filename  = dialog.show()
 
         self.open_image(filename)
+
+    def on_save(self):
+        pass
 
     def open_image(self, filename):
         if filename:

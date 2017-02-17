@@ -9,5 +9,8 @@ install:
 test:
 	$(PYTHON) setup.py test
 
+run:
+	$(PYTHON) -m pygram
+
 clean:
 	$(PYTHON) setup.py clean

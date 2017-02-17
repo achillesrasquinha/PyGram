@@ -2,7 +2,7 @@ import os
 
 from pygram.config import BaseConfig
 from pygram.utils.const import ABSPATH_DATA
-from pygram.filters import grayscale, nss
+from pygram.filters import grayscale, sepia, nss, brannan, clarendon, inkwell
 
 class PyGramConfig(BaseConfig):
     NAME                = 'PyGram'
@@ -21,13 +21,29 @@ class PyGramConfig(BaseConfig):
         },
         {
             'name': 'grayscale',
-            'command': lambda image: grayscale(image)
+            'command': grayscale
+        },
+        {
+            'name': 'sepia',
+            'command': sepia
         },
         {
             'name': '1977',
-            'command': lambda image: nss(image)
+            'command': nss
+        },
+        {
+            'name': 'brannan',
+            'command': brannan
+        },
+        {
+            'name': 'clarendon',
+            'command': clarendon
+        },
+        {
+            'name': 'inkwell',
+            'command': inkwell
         }
     ]
 
-    BTNGRID_ROWS        = 1
     BTNGRID_COLS        = 3
+    BTNGRID_ROWS        = len(FILTERS) // BTNGRID_COLS + 1

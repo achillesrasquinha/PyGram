@@ -1,4 +1,3 @@
-import numpy as np
 from PIL import Image, ImageEnhance
 
 def nss(image):
@@ -13,6 +12,6 @@ def nss(image):
 
     copy     = image.copy()
 
-    copy.paste(nss, (0,0), nss)
+    copy.paste(nss, (0, 0), nss)
 
     return copy
